@@ -20,7 +20,9 @@ app.delete('/items/:id', deleteItem);
 
 db.init()
     .then(() => {
-        app.listen(PORT, () => console.log(`Docker container listening on port ${PORT}`));
+        app.listen(PORT, () =>
+            console.log(`Docker container listening on port ${PORT}`),
+        );
     })
     .catch((err) => {
         console.error(err);
