@@ -6,16 +6,21 @@
 ARG NODE_VERSION=18.0.0
 
 # Use the specified Node.js version with the lightweight Alpine Linux distribution as the base image.
-FROM node:${NODE_VERSION}-alpine as base
+FROM node:${NODE_VERSION}-alpine AS base
 
 # Set the working directory inside the container where application code and dependencies will reside.
 WORKDIR /usr/src/app
 
 # Expose port on which the Docker container will listen for incoming connections.
+ARG CONTAINER_PORT
+ARG PORT_PROTOCOL
 EXPOSE ${CONTAINER_PORT}
 
 # Create a new stage for the development environment using the base image defined earlier.
-FROM base as dev
+FROM base AS dev
+
+# Set the environment to 'development'
+ENV NODE_ENV=development
 
 # Install dependencies for development using bind mounts and cache optimization:
 # 1. Bind the `package.json` and `package-lock.json` files from the host to the container.
@@ -31,11 +36,11 @@ USER node
 # Copy the application code from the host into the container.
 COPY . .
 
-# Set the default command to start the application in development mode.
-CMD npm run dev
+# Run the development server
+CMD ["npm", "run", "dev"]
 
 # Create another stage for the production environment using the same base image.
-FROM base as prod
+FROM base AS prod
 
 # Install only production dependencies:
 # 1. Bind `package.json` and `package-lock.json` to ensure dependency integrity.
@@ -54,3 +59,24 @@ COPY . .
 
 # Set the default command to start the application in production mode.
 CMD node src/index.js
+
+# Use the base image and name this stage 'test'
+FROM base AS test
+
+# Set the environment to 'test'
+ENV NODE_ENV=test
+
+# Bind mount package files and cache npm dependencies, then install dev dependencies
+RUN --mount=type=bind,source=package.json,target=package.json \
+    --mount=type=bind,source=package-lock.json,target=package-lock.json \
+    --mount=type=cache,target=/root/.npm \
+    npm ci --include=dev
+
+# Switch to the 'node' user
+USER node
+
+# Copy all files into the container
+COPY . .
+
+# Run the tests
+RUN ["npm", "run", "test"]
