@@ -1,0 +1,49 @@
+# Defines the API version and type of resource (Deployment) to manage the application's pods.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # Name of the Deployment.
+  name: docker-nodejs-demo
+  # Namespace in which this Deployment will be created.
+  namespace: default
+spec:
+  # Number of pod replicas to run.
+  replicas: 1
+  # Selector to identify the pods managed by this Deployment.
+  selector:
+    matchLabels:
+      # Label used to match the pods for this Deployment.
+      todo: web
+  template:
+    metadata:
+      # Labels applied to the pods created by this Deployment.
+      labels:
+        todo: web
+    spec:
+      containers:
+        # Defines the container inside the pod.
+        - name: todo-site
+          # Docker image to be used for this container.
+          image: born3am/docker-nodejs-sample
+          # Specifies the image pull policy (Always ensures the latest image is pulled).
+          imagePullPolicy: Always
+---
+# Defines the API version and type of resource (Service) to expose the application.
+apiVersion: v1
+kind: Service
+metadata:
+  # Name of the Service.
+  name: todo-entrypoint
+  # Namespace in which this Service will be created.
+  namespace: default
+spec:
+  # Type of Service; NodePort exposes the application on a port accessible outside the cluster.
+  type: NodePort
+  # Selector to associate this Service with the pods.
+  selector:
+    todo: web
+  # Configuration of the ports for the Service.
+  ports:
+    - port: 3000         # Port on which the Service will listen.
+      targetPort: 3000   # Port on the container to route traffic to.
+      nodePort: 30001    # Fixed port on the node to expose the application externally.
