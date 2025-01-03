@@ -11,8 +11,8 @@ FROM node:${NODE_VERSION}-alpine as base
 # Set the working directory inside the container where application code and dependencies will reside.
 WORKDIR /usr/src/app
 
-# Expose port 3000 for the application to listen on, making it accessible to other services.
-EXPOSE 3000
+# Expose port on which the Docker container will listen for incoming connections.
+EXPOSE ${CONTAINER_PORT}
 
 # Create a new stage for the development environment using the base image defined earlier.
 FROM base as dev

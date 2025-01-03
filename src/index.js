@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const app = express();
 const db = require('./persistence');
@@ -5,6 +7,8 @@ const getItems = require('./routes/getItems');
 const addItem = require('./routes/addItem');
 const updateItem = require('./routes/updateItem');
 const deleteItem = require('./routes/deleteItem');
+
+const PORT = process.env.CONTAINER_PORT || 3000;
 
 app.use(express.json());
 app.use(express.static(__dirname + '/static'));
@@ -16,7 +20,7 @@ app.delete('/items/:id', deleteItem);
 
 db.init()
     .then(() => {
-        app.listen(3000, () => console.log('Listening on port 3000'));
+        app.listen(PORT, () => console.log(`Docker container listening on port ${PORT}`));
     })
     .catch((err) => {
         console.error(err);
