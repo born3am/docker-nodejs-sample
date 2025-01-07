@@ -1,0 +1,54 @@
+services:
+  server:
+    env_file: .env
+    container_name: born3am-test-server-container
+    build:
+      context: .
+      target: dev
+      args:
+        - CONTAINER_PORT=${CONTAINER_PORT}
+        - PORT_PROTOCOL=${PORT_PROTOCOL}
+    ports:
+      - "${HOST_PORT}:${CONTAINER_PORT}"
+    volumes: # Bind mount for development.
+      - ./src:/usr/src/app/src
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      POSTGRES_HOST: ${POSTGRES_DB_HOST}
+      POSTGRES_USER: ${POSTGRES_DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db-password
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+    depends_on:
+      db:
+        condition: service_healthy
+    secrets:
+      - db-password
+
+  db:
+    env_file: .env
+    container_name: born3am-test-db-container
+    image: postgres
+    restart: always
+    volumes: # Named volume to persist PostgreSQL data.
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db-password
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+    expose:
+      - ${POSTGRES_DB_PORT}
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    secrets:
+      - db-password
+
+volumes:
+  db-data:
+    name: ${HOST_NAMED_VOLUME}
+
+secrets:
+  db-password:
+    file: ${POSTGRES_DB_PASSWORD_FILE}
