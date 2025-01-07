@@ -8,7 +8,8 @@ const addItem = require('./routes/addItem');
 const updateItem = require('./routes/updateItem');
 const deleteItem = require('./routes/deleteItem');
 
-const PORT = process.env.CONTAINER_PORT || 3000;
+const PORT = process.env.CONTAINER_PORT;
+const HOST = process.env.HOST_PORT;
 
 app.use(express.json());
 app.use(express.static(__dirname + '/static'));
@@ -20,8 +21,13 @@ app.delete('/items/:id', deleteItem);
 
 db.init()
     .then(() => {
-        app.listen(PORT, () =>
-            console.log(`Docker container listening on port ${PORT}`),
+        app.listen(
+            PORT,
+            () =>
+                console.log(
+                    `Docker container listening on http://localhost:${PORT}`,
+                ),
+            console.log(`Host listening on http://localhost:${HOST}`),
         );
     })
     .catch((err) => {
