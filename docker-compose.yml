@@ -1,7 +1,8 @@
 services:
   server:
     env_file: .env
-    container_name: born3am-test-server-container
+    container_name: born3am-test-netdata-server-container
+    hostname: born3am-test-netdata-server-hostname
     build:
       context: .
       target: dev
@@ -26,9 +27,10 @@ services:
 
   db:
     env_file: .env
-    container_name: born3am-test-db-container
+    container_name: born3am-test-netdata-db-container
+    hostname: born3am-test-netdata-db-hostname
     image: postgres
-    restart: always
+    restart: "on-failure"
     volumes: # Named volume to persist PostgreSQL data.
       - db-data:/var/lib/postgresql/data
     environment:
@@ -45,9 +47,32 @@ services:
     secrets:
       - db-password
 
+  netdata:
+    image: netdata/netdata
+    container_name: born3am-test-netdata-monitor
+    hostname: born3am-test-netdata-monitor-hostname
+    ports:
+      - "${NETDATA_HOST_PORT}:${NETDATA_CONTAINER_PORT}"
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor=unconfined
+    volumes:
+      - netdata:/etc/netdata
+      - netdata:/var/cache/netdata
+      - netdata:/var/lib/netdata
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Read-only access to Docker socket in order to monitor containers.
+
+
 volumes:
   db-data:
-    name: ${HOST_NAMED_VOLUME}
+    name: ${NETDATA_HOST_NAMED_VOLUME}
+  netdata:
 
 secrets:
   db-password:
